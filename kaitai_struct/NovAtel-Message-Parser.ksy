@@ -5,37 +5,56 @@ meta:
 seq:
   - id: all_novatel_messages
     type: novatel_message
-    repeat: eos
-#    repeat: expr
-#    repeat-expr: 4
+#    repeat: eos
+    repeat: expr
+    repeat-expr: 1
+#    repeat-expr: 9714
 
 types:
   novatel_message:
     seq:
-    - id: novatel_header
-      type: novatel_header
+    - id: novatel_message_type
+      type: u1
     - id: novatel_message_body
       type:
-        switch-on: novatel_header.message_id
+        switch-on: novatel_message_type
         cases:
-          'novatel_message_types::time': time
-          'novatel_message_types::agcstats': agcstats
-          'novatel_message_types::rxsecstatus': rxsecstatus
-          'novatel_message_types::systemlevels': systemlevels
+          'novatel_message_types::novatel_legacy_header': novatel_binary_header
+#    - id: magic1
+#      contents: ['#']
+#    - id: magic2
+#      contents: [0xaa, 0x44, 0x12]
+    
+
+      
+## NovAtel Header ##
+
+  novatel_binary_header:
+    seq:
+#     - id: sync
+#        contents: [0xaa, 0x44, 0x12]
+    - id: novatel_binary_header
+      type: novatel_binary_header
+    - id: novatel_binary_message_body
+      type:
+        switch-on: novatel_binary_header.message_id
+        cases:
+          'novatel_binary_message_types::range': range
+          'novatel_binary_message_types::time': time
+          'novatel_binary_message_types::rawwaasframewp': rawwaasframewp
+          'novatel_binary_message_types::agcstats': agcstats
+          'novatel_binary_message_types::allsqmi': allsqmi
+          'novatel_binary_message_types::allsqmq': allsqmq
+          'novatel_binary_message_types::rxsecstatus': rxsecstatus
+          'novatel_binary_message_types::systemlevels': systemlevels
+#          _: rec_type_unknown
     - id: crc
       size: 4
-      
-## NoVatel Header ##
-
-  novatel_header:
-    seq:
-      - id: sync
-        contents: [0xaa, 0x44, 0x12]
       - id: header_length
         type: u1
       - id: message_id
         type: u2
-        enum: novatel_message_types
+        enum: novatel_binary_message_types
       - id: message_type
         type: u1
       - id: port_address
@@ -57,6 +76,21 @@ types:
       - id: reserved_1
         size: 4
 
+## range ##
+
+  range:
+    seq:
+      - id: num_of_data_sets
+        type: u4
+      - id: range_data_sets
+        type: range_data_set
+        repeat: expr
+        repeat-expr: num_of_data_sets
+  range_data_set:
+    seq:
+      - id: range_data_set_stub
+        size: 44
+
 ## time ##
 
   time:
@@ -71,7 +105,21 @@ types:
         type: f8
       - id: reserved
         size: 20
-        
+
+
+## rawwaasframewp ##
+
+  rawwaasframewp:
+    seq:
+      - id: channel_number
+        type: u4
+      - id: geo_prn
+        type: u4
+      - id: parity_flag
+        type: u4
+      - id: sbas_frame
+        size: 32
+
 ## agcstats ##
 
   agcstats:
@@ -110,7 +158,52 @@ types:
         type: f8
       - id: reserved_2
         type: f8
-        
+
+## allsqmi ##
+  allsqmi:
+    seq:
+      - id: num_of_tracked_satellites
+        type: u4
+      - id: satellite_data
+        type: satellite
+        repeat: expr
+        repeat-expr: num_of_tracked_satellites
+  satellite:
+    seq:
+      - id: prn_number
+        type: u4
+      - id: signal_channel
+        type: u4
+      - id: number_of_accumulations
+        type: u4
+      - id: accumulation
+        type: s4
+        repeat: expr
+        repeat-expr: number_of_accumulations
+
+## allsqmq ##
+
+  allsqmq:
+    seq:
+      - id: num_of_tracked_satellites
+        type: u4
+      - id: satellite_data
+        type: satellite
+        repeat: expr
+        repeat-expr: num_of_tracked_satellites
+  satellite:
+    seq:
+      - id: prn_number
+        type: u4
+      - id: signal_channel
+        type: u4
+      - id: number_of_accumulations
+        type: u4
+      - id: accumulation
+        type: s4
+        repeat: expr
+        repeat-expr: number_of_accumulations
+
 ## rxsecstatus ##
 
   rxsecstatus:
@@ -141,11 +234,27 @@ types:
       - id: systemlevels_components_stub
         size: 48
         
-## NovAtel Message IDs ##
 
+## NovAtel Message IDs ##
 enums:
   novatel_message_types:
+    0xaa: novatel_legacy_header
+    0x23: novatel_ascii_header
+
+  novatel_binary_message_types:
+  # Partial
+    43: range
+  # Full
     101: time
+  # Full
+    571: rawwaasframewp
+  # Full
     630: agcstats
+  # Partial
+    632: allsqmi
+  # Partial
+    633: allsqmq
+  # Partial
     638: rxsecstatus
+  # Partial
     653: systemlevels
