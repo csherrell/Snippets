@@ -7,54 +7,40 @@ seq:
     type: novatel_message
 #    repeat: eos
     repeat: expr
-    repeat-expr: 1
-#    repeat-expr: 9714
+    repeat-expr: 9713
 
 types:
   novatel_message:
     seq:
-    - id: novatel_message_type
-      type: u1
+    - id: novatel_header
+      type: novatel_header
     - id: novatel_message_body
       type:
-        switch-on: novatel_message_type
+        switch-on: novatel_header.message_id
         cases:
-          'novatel_message_types::novatel_legacy_header': novatel_binary_header
-#    - id: magic1
-#      contents: ['#']
-#    - id: magic2
-#      contents: [0xaa, 0x44, 0x12]
-    
-
-      
-## NovAtel Header ##
-
-  novatel_binary_header:
-    seq:
-#     - id: sync
-#        contents: [0xaa, 0x44, 0x12]
-    - id: novatel_binary_header
-      type: novatel_binary_header
-    - id: novatel_binary_message_body
-      type:
-        switch-on: novatel_binary_header.message_id
-        cases:
-          'novatel_binary_message_types::range': range
-          'novatel_binary_message_types::time': time
-          'novatel_binary_message_types::rawwaasframewp': rawwaasframewp
-          'novatel_binary_message_types::agcstats': agcstats
-          'novatel_binary_message_types::allsqmi': allsqmi
-          'novatel_binary_message_types::allsqmq': allsqmq
-          'novatel_binary_message_types::rxsecstatus': rxsecstatus
-          'novatel_binary_message_types::systemlevels': systemlevels
+          'novatel_message_types::range': range
+          'novatel_message_types::time': time
+          'novatel_message_types::rawwaasframewp': rawwaasframewp
+          'novatel_message_types::agcstats': agcstats
+          'novatel_message_types::allsqmi': allsqmi
+          'novatel_message_types::allsqmq': allsqmq
+          'novatel_message_types::rxsecstatus': rxsecstatus
+          'novatel_message_types::systemlevels': systemlevels
 #          _: rec_type_unknown
     - id: crc
       size: 4
+      
+## NoVatel Header ##
+
+  novatel_header:
+    seq:
+      - id: sync
+        contents: [0xaa, 0x44, 0x12]
       - id: header_length
         type: u1
       - id: message_id
         type: u2
-        enum: novatel_binary_message_types
+        enum: novatel_message_types
       - id: message_type
         type: u1
       - id: port_address
@@ -234,14 +220,10 @@ types:
       - id: systemlevels_components_stub
         size: 48
         
-
 ## NovAtel Message IDs ##
+
 enums:
   novatel_message_types:
-    0xaa: novatel_legacy_header
-    0x23: novatel_ascii_header
-
-  novatel_binary_message_types:
   # Partial
     43: range
   # Full
