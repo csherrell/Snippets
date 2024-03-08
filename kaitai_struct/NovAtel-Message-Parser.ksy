@@ -5,42 +5,153 @@ meta:
 seq:
   - id: all_novatel_messages
     type: novatel_message
-#    repeat: eos
+#   repeat: eos
     repeat: expr
-    repeat-expr: 9713
+    repeat-expr: 9
+#   repeat-expr: 9713
+#    repeat-expr: 150000
+#    repeat-expr: 150000
+
+# G3: 0xAACC4756
+# Header Length: 28
+# + 4 + 64*142 + 4
+
+# Legacy: 0xAA4412
+
 
 types:
   novatel_message:
     seq:
-    - id: novatel_header
-      type: novatel_header
-    - id: novatel_message_body
+    - id: first_sync_byte
+      type: u1
+      enum: novatel_header_types
+    - id: novatel_header_type
       type:
-        switch-on: novatel_header.message_id
+        switch-on: first_sync_byte
         cases:
-          'novatel_message_types::range': range
-          'novatel_message_types::time': time
-          'novatel_message_types::rawwaasframewp': rawwaasframewp
-          'novatel_message_types::agcstats': agcstats
-          'novatel_message_types::allsqmi': allsqmi
-          'novatel_message_types::allsqmq': allsqmq
-          'novatel_message_types::rxsecstatus': rxsecstatus
-          'novatel_message_types::systemlevels': systemlevels
-#          _: rec_type_unknown
-    - id: crc
-      size: 4
-      
-## NoVatel Header ##
+          'novatel_header_types::novatel_ascii_header': novatel_ascii_message
+          'novatel_header_types::novatel_binary_header': novatel_binary_message
 
-  novatel_header:
+  novatel_ascii_message:
     seq:
-      - id: sync
-        contents: [0xaa, 0x44, 0x12]
+      - id: novatel_ascii_rxcommands
+        type: novatel_ascii_rxcommands
+
+  novatel_ascii_rxcommands:
+    seq:
+      - id: message_name
+        type: str
+        terminator: 0x2c
+        encoding: UTF-8
+      - id: port
+        type: str
+        terminator: 0x2c
+        encoding: UTF-8
+      - id: reserved1
+        type: str
+        terminator: 0x2c
+        encoding: UTF-8
+      - id: idle_time
+        type: str
+        terminator: 0x2c
+        encoding: UTF-8
+      - id: time_status
+        type: str
+        terminator: 0x2c
+        encoding: UTF-8
+      - id: week
+        type: str
+        terminator: 0x2c
+        encoding: UTF-8
+      - id: seconds
+        type: str
+        terminator: 0x2c
+        encoding: UTF-8
+      - id: receiver_status
+        type: str
+        terminator: 0x2c
+        encoding: UTF-8
+      - id: reserved2
+        type: str
+        terminator: 0x2c
+        encoding: UTF-8
+      - id: reserved3
+        type: str
+        terminator: 0x3b
+        encoding: UTF-8
+      - id: command_type
+        type: str
+        terminator: 0x2c
+        encoding: UTF-8
+      - id: embedded_message
+        type: str
+        terminator: 0x2a
+        encoding: UTF-8
+      - id: checksum
+        type: str
+        terminator: 0x0d
+        encoding: UTF-8
+      - id: message_terminator
+        type: str
+        terminator: 0x0a
+        encoding: UTF-8
+
+## NoVatel Header ##
+  novatel_binary_message:
+    seq:
+      - id: second_sync_byte
+        type: u1
+        enum: novatel_binary_header_types
+      - id: novatel_binary_message_type
+        type:
+          switch-on: second_sync_byte
+          cases:
+            'novatel_binary_header_types::novatel_binary_legacy_header': novatel_binary_legacy_message
+            'novatel_binary_header_types::novatel_binary_g3_header': novatel_binary_g3_message
+  #          _: rec_type_unknown
+      - id: crc
+        size: 4
+
+  novatel_binary_g3_message:
+    seq:
+      - id: third_sync_byte
+        contents: [0x47, 0x56]
+      - id: message_length
+        type: u2
+      - id: message_id
+        type: u2
+        enum: novatel_g3_message_types
+      - id: log_count
+        type: u4
+      - id: time_status
+        type: u2
+      - id: gps_week
+        type: u2
+      - id: gps_milliseconds
+        type: u4
+      - id: reserved_1
+        size: 4
+      - id: reserved_2
+        size: 2
+      - id: reserved_3
+        size: 2
+      - id: novatel_binary_g3_message_body
+        type:
+          switch-on: message_id
+          cases:
+            'novatel_g3_message_types::measurementdata': measurementdata
+  #          _: rec_type_unknown
+
+
+  novatel_binary_legacy_message:
+    seq:
+      - id: third_sync_byte
+        contents: [0x12]
       - id: header_length
         type: u1
       - id: message_id
         type: u2
-        enum: novatel_message_types
+        enum: novatel_legacy_message_types
       - id: message_type
         type: u1
       - id: port_address
@@ -61,6 +172,35 @@ types:
         type: u4
       - id: reserved_1
         size: 4
+      - id: novatel_binary_legacy_message_body
+        type:
+          switch-on: message_id
+          cases:
+            'novatel_legacy_message_types::range': range
+            'novatel_legacy_message_types::time': time
+            'novatel_legacy_message_types::rawwaasframewp': rawwaasframewp
+            'novatel_legacy_message_types::agcstats': agcstats
+            'novatel_legacy_message_types::allsqmi': allsqmi
+            'novatel_legacy_message_types::allsqmq': allsqmq
+            'novatel_legacy_message_types::rxsecstatus': rxsecstatus
+            'novatel_legacy_message_types::systemlevels': systemlevels
+  #          _: rec_type_unknown
+
+
+  measurementdata:
+    seq:
+      - id: measurementdata_num_of_observations
+        type: u4
+      - id: measurementdata_observations
+        type: measurementdata_observation
+        repeat: expr
+        repeat-expr: measurementdata_num_of_observations
+
+  measurementdata_observation:
+    seq:
+      - id: measurementdata_observation_stub
+        size: 64
+        
 
 ## range ##
 
@@ -72,6 +212,7 @@ types:
         type: range_data_set
         repeat: expr
         repeat-expr: num_of_data_sets
+
   range_data_set:
     seq:
       - id: range_data_set_stub
@@ -209,12 +350,12 @@ types:
 
   systemlevels:
     seq:
-      - id: num_of_components
+      - id: systemlevels_num_of_components
         type: u4
       - id: systemlevels_components
         type: systemlevels_components
         repeat: expr
-        repeat-expr: num_of_components
+        repeat-expr: systemlevels_num_of_components
   systemlevels_components:
     seq:
       - id: systemlevels_components_stub
@@ -223,7 +364,18 @@ types:
 ## NovAtel Message IDs ##
 
 enums:
-  novatel_message_types:
+  novatel_header_types:
+    0x23: novatel_ascii_header
+    0xaa: novatel_binary_header
+  
+  novatel_binary_header_types:
+    0x44: novatel_binary_legacy_header
+    0xcc: novatel_binary_g3_header
+
+  novatel_g3_message_types:
+    0x1007: measurementdata
+
+  novatel_legacy_message_types:
   # Partial
     43: range
   # Full
