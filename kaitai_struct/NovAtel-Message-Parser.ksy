@@ -6,43 +6,37 @@ meta:
 seq:
   - id: all_novatel_messages
     type: novatel_message
-#    repeat: eos
-    repeat: expr 
-#    repeat-expr: 63
+    #    repeat: eos
+    repeat: expr
+    #    repeat-expr: 63
     repeat-expr: 9714
-
-
-
 # G3: 0xAACC4756
 # Header Length: 28
 # + 4 + 64*142 + 4
 
 # Legacy: 0xAA4412
-
-
 types:
   novatel_message:
     seq:
-    - id: sync_bytes
-      type: u4
-      enum: novatel_header_types
-      doc: Using 4 Bytes
-      doc-ref: https://novatel.com/support/high-precision-gnss-gps-receivers/specialty-ground-reference-receivers/waas-g-iii-receiver "NovAtel G3"
-    - id: novatel_header_type
-      type:
-        switch-on: sync_bytes
-        cases:
-          'novatel_header_types::bbb_junk': bbb_junk
-          'novatel_header_types::novatel_ascii_rxcommands': novatel_ascii_rxcommands
-          'novatel_header_types::novatel_binary_legacy_header': novatel_binary_legacy_message
-          'novatel_header_types::novatel_binary_g3_header': novatel_binary_g3_message
-#         _: rec_type_unknown
+      - id: sync_bytes
+        type: u4
+        enum: novatel_header_types
+        doc: Using 4 Bytes
+        doc-ref: https://novatel.com/support/high-precision-gnss-gps-receivers/specialty-ground-reference-receivers/waas-g-iii-receiver "NovAtel G3"
+      - id: novatel_header_type
+        type:
+          switch-on: sync_bytes
+          cases:
+            'novatel_header_types::bbb_junk': bbb_junk
+            'novatel_header_types::novatel_ascii_rxcommands': novatel_ascii_rxcommands
+            'novatel_header_types::novatel_binary_legacy_header': novatel_binary_legacy_message
+            'novatel_header_types::novatel_binary_g3_header': novatel_binary_g3_message
+  #         _: rec_type_unknown
 
   bbb_junk:
     seq:
       - id: more_junk
         type: u4
-
   novatel_ascii_rxcommands:
     seq:
       - id: message_name
@@ -101,7 +95,6 @@ types:
         type: str
         terminator: 0x0a
         encoding: UTF-8
-
   novatel_binary_g3_message:
     seq:
       - id: message_length
@@ -129,21 +122,19 @@ types:
           cases:
             'novatel_g3_message_types::measurementdata': measurementdata
             'novatel_g3_message_types::test': test
-#            _: rec_type_unknown
+            #            _: rec_type_unknown
       - id: crc
         size: 4
-
   test:
     seq:
       - id: test
         type: u1
-        
   novatel_binary_legacy_message:
     seq:
-#      - id: third_sync_byte
-#        contents: [0x12]
-#      - id: header_length
-#        type: u1
+      #      - id: third_sync_byte
+      #        contents: [0x12]
+      #      - id: header_length
+      #        type: u1
       - id: message_id
         type: u2
         enum: novatel_legacy_message_types
@@ -179,10 +170,9 @@ types:
             'novatel_legacy_message_types::allsqmq': allsqmq
             'novatel_legacy_message_types::rxsecstatus': rxsecstatus
             'novatel_legacy_message_types::systemlevels': systemlevels
-  #          _: rec_type_unknown
+            #          _: rec_type_unknown
       - id: crc
         size: 4
-
   measurementdata:
     seq:
       - id: measurementdata_num_of_observations
@@ -196,10 +186,7 @@ types:
         seq:
           - id: measurementdata_observation_stub
             size: 64
-        
-
-## range ##
-
+            ## range ##
   range:
     seq:
       - id: num_of_data_sets
@@ -208,14 +195,11 @@ types:
         type: range_data_set
         repeat: expr
         repeat-expr: num_of_data_sets
-
   range_data_set:
     seq:
       - id: range_data_set_stub
         size: 44
-
-## time ##
-
+        ## time ##
   time:
     seq:
       - id: num_of_components
@@ -228,10 +212,7 @@ types:
         type: f8
       - id: reserved
         size: 20
-
-
-## rawwaasframewp ##
-
+        ## rawwaasframewp ##
   rawwaasframewp:
     seq:
       - id: channel_number
@@ -242,9 +223,7 @@ types:
         type: u4
       - id: sbas_frame
         size: 32
-
-## agcstats ##a
-
+        ## agcstats ##a
   agcstats:
     seq:
       - id: num_of_rf_decks
@@ -281,8 +260,7 @@ types:
         type: f8
       - id: reserved_2
         type: f8
-
-## allsqmi ##
+        ## allsqmi ##
   allsqmi:
     seq:
       - id: num_of_tracked_satellites
@@ -303,9 +281,7 @@ types:
         type: s4
         repeat: expr
         repeat-expr: number_of_accumulations
-
-## allsqmq ##
-
+        ## allsqmq ##
   allsqmq:
     seq:
       - id: num_of_tracked_satellites
@@ -326,9 +302,7 @@ types:
         type: s4
         repeat: expr
         repeat-expr: number_of_accumulations
-
-## rxsecstatus ##
-
+        ## rxsecstatus ##
   rxsecstatus:
     seq:
       - id: num_of_components
@@ -341,9 +315,7 @@ types:
     seq:
       - id: rxsecstatus_components_stub
         size: 68
-
-## agcstats ##
-
+        ## agcstats ##
   systemlevels:
     seq:
       - id: systemlevels_num_of_components
@@ -356,38 +328,32 @@ types:
     seq:
       - id: systemlevels_components_stub
         size: 48
-
 enums:
   novatel_header_types:
     0xBB0BBB0B: bbb_junk
     0x1c1244aa: novatel_binary_legacy_header
     0x5647ccaa: novatel_binary_g3_header
     0x43585223: novatel_ascii_rxcommands
-  
-  
   novatel_binary_header_types:
     0x44: novatel_binary_legacy_header
     0xcc: novatel_binary_g3_header
-
   novatel_g3_message_types:
     1: test
     4103: measurementdata
-
-
   novatel_legacy_message_types:
-  # Partial
+    # Partial
     43: range
-  # Full
+    # Full
     101: time
-  # Full
+    # Full
     571: rawwaasframewp
-  # Full
+    # Full
     630: agcstats
-  # Partial
+    # Partial
     632: allsqmi
-  # Partial
+    # Partial
     633: allsqmq
-  # Partial
+    # Partial
     638: rxsecstatus
-  # Partial
+    # Partial
     653: systemlevels
