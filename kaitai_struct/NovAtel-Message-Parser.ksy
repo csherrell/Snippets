@@ -8,8 +8,8 @@ seq:
     type: novatel_message
     #    repeat: eos
     repeat: expr
-    repeat-expr: 2006
-    #repeat-expr: 1
+    repeat-expr: 13465
+#    repeat-expr: 1
 #    repeat-expr: 9714
 #   repeat-expr: 17000
 
@@ -130,11 +130,13 @@ types:
             'novatel_g3_message_types::agcinfo': agcinfo
             'novatel_g3_message_types::cardstatus': cardstatus
             'novatel_g3_message_types::corrdata': corrdata
+            'novatel_g3_message_types::ethstatus': ethstatus
             'novatel_g3_message_types::factorydata': factorydata
             'novatel_g3_message_types::measurementdata': measurementdata
             'novatel_g3_message_types::satpos': satpos
             'novatel_g3_message_types::rawframedata': rawframedata
             'novatel_g3_message_types::timesolution': timesolution
+            'novatel_g3_message_types::version': version
       - id: crc
         size: 4
   test:
@@ -228,6 +230,19 @@ types:
         seq:
           - id: channel_info_stub
             size: 52
+  version:
+    seq:
+      - id: num_of_components
+        type: u4
+      - id: components
+        type: component
+        repeat: expr
+        repeat-expr: num_of_components
+    types:
+      component:
+        seq:
+          - id: component_stub
+            size: 232
   rawframedata:
     seq:
       - id: rawframedata_stub
@@ -303,6 +318,19 @@ types:
             type: u4
           - id: bin_value_q
             type: u4
+  ethstatus:
+    seq:
+      - id: num_of_records
+        type: u4
+      - id: ethstatus_records
+        type: ethstatus_record
+        repeat: expr
+        repeat-expr: num_of_records
+    types:
+      ethstatus_record:
+        seq:
+          - id: ethstatus_record_stub
+            size: 28
   factorydata:
     seq:
       - id: number_of_entries
@@ -474,11 +502,13 @@ enums:
     4096: agcinfo
     4098: cardstatus
     4099: corrdata
+    4101: ethstatus
     4102: factorydata
     4103: measurementdata
-    4106: satpos
     4104: rawframedata
+    4106: satpos
     4107: timesolution
+    4108: version
   novatel_legacy_message_types:
     # Partial
     43: range
