@@ -8,8 +8,10 @@ seq:
     type: novatel_message
     #    repeat: eos
     repeat: expr
+    #    repeat-expr: 100
     #    repeat-expr: 63
-    repeat-expr: 9714
+    #    repeat-expr: 9714
+    repeat-expr: 17000
 # G3: 0xAACC4756
 # Header Length: 28
 # + 4 + 64*142 + 4
@@ -27,15 +29,15 @@ types:
         type:
           switch-on: sync_bytes
           cases:
-            'novatel_header_types::bbb_junk': bbb_junk
+            'novatel_header_types::fragmented_udp': fragmented_udp
             'novatel_header_types::novatel_ascii_rxcommands': novatel_ascii_rxcommands
             'novatel_header_types::novatel_binary_legacy_header': novatel_binary_legacy_message
             'novatel_header_types::novatel_binary_g3_header': novatel_binary_g3_message
   #         _: rec_type_unknown
 
-  bbb_junk:
+  fragmented_udp:
     seq:
-      - id: more_junk
+      - id: fragmented_udp_data
         type: u4
   novatel_ascii_rxcommands:
     seq:
@@ -120,9 +122,13 @@ types:
         type:
           switch-on: g3_message_id
           cases:
+            'novatel_g3_message_types::agcinfo': agcinfo
+            'novatel_g3_message_types::cardstatus': cardstatus
+            'novatel_g3_message_types::corrdata': corrdata
+            'novatel_g3_message_types::factorydata': factorydata
             'novatel_g3_message_types::measurementdata': measurementdata
-            'novatel_g3_message_types::test': test
-            #            _: rec_type_unknown
+            'novatel_g3_message_types::rawframedata': rawframedata
+            'novatel_g3_message_types::timesolution': timesolution
       - id: crc
         size: 4
   test:
@@ -186,7 +192,113 @@ types:
         seq:
           - id: measurementdata_observation_stub
             size: 64
-            ## range ##
+  timesolution:
+    seq:
+      - id: timesolution_stub
+        size: 32
+      - id: number_of_channels
+        type: u4
+      - id: channel_data
+        type: channel_info
+        repeat: expr
+        repeat-expr: number_of_channels
+    types:
+      channel_info:
+        seq:
+          - id: channel_info_stub
+            size: 52
+  rawframedata:
+    seq:
+      - id: rawframedata_stub
+        size: 20
+      - id: rawframedata_number_of_bytes
+        type: u4
+      - id: rawframedata_bytes
+        type: str
+        size: rawframedata_number_of_bytes
+        encoding: ASCII
+  agcinfo:
+    seq:
+      - id: num_of_entries
+        type: u4
+      - id: agcinfo_data
+        type: agcinfo_measurement
+        repeat: expr
+        repeat-expr: num_of_entries
+    types:
+      agcinfo_measurement:
+        seq:
+          - id: agcinfo_stub
+            size: 88
+  cardstatus:
+    seq:
+      - id: cardstatus_stub
+        size: 16
+      - id: number_of_cards
+        type: u4
+      - id: cardstatus_data
+        type: card_status
+        repeat: expr
+        repeat-expr: number_of_cards
+      - id: number_of_fans
+        type: u4
+      - id: fan_data
+        type: fan_status
+        repeat: expr
+        repeat-expr: number_of_fans
+    types:
+      card_status:
+        seq:
+          - id: card_status_stub
+            size: 60
+      fan_status:
+        seq:
+          - id: fan_speed
+            type: u2
+          - id: fan_failed
+            type: u2
+  corrdata:
+    seq:
+      - id: num_of_entries
+        type: u4
+      - id: correlator_data
+        type: correlator_measurement
+        repeat: expr
+        repeat-expr: num_of_entries
+    types:
+      correlator_measurement:
+        seq:
+          - id: correlator_measurement_stub
+            size: 12
+          - id: number_of_bins
+            type: u4
+          - id: correlation_bins
+            type: correlation_bin
+            repeat: expr
+            repeat-expr: number_of_bins
+      correlation_bin:
+        seq:
+          - id: bin_value_i
+            type: u4
+          - id: bin_value_q
+            type: u4
+  factorydata:
+    seq:
+      - id: number_of_entries
+        type: u4
+      - id: manufacturer_data
+        type: data_string
+        repeat: expr
+        repeat-expr: number_of_entries
+    types:
+      data_string:
+        seq:
+          - id: manufacturer_data_sting
+            type: str
+            encoding: ASCII
+            size: 512
+  ## range ##
+
   range:
     seq:
       - id: num_of_data_sets
@@ -330,7 +442,7 @@ types:
         size: 48
 enums:
   novatel_header_types:
-    0xBB0BBB0B: bbb_junk
+    0xBB0BBB0B: fragmented_udp
     0x1c1244aa: novatel_binary_legacy_header
     0x5647ccaa: novatel_binary_g3_header
     0x43585223: novatel_ascii_rxcommands
@@ -338,8 +450,13 @@ enums:
     0x44: novatel_binary_legacy_header
     0xcc: novatel_binary_g3_header
   novatel_g3_message_types:
-    1: test
+    4096: agcinfo
+    4098: cardstatus
+    4099: corrdata
+    4102: factorydata
     4103: measurementdata
+    4104: rawframedata
+    4107: timesolution
   novatel_legacy_message_types:
     # Partial
     43: range
