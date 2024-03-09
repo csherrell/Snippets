@@ -8,7 +8,7 @@ seq:
     type: novatel_message
     #    repeat: eos
     repeat: expr
-    repeat-expr: 100
+    repeat-expr: 2006
     #repeat-expr: 1
 #    repeat-expr: 9714
 #   repeat-expr: 17000
@@ -35,8 +35,8 @@ types:
             'novatel_header_types::novatel_ascii_rxcommands': novatel_ascii_rxcommands
             'novatel_header_types::novatel_binary_legacy_header': novatel_binary_legacy_message
             'novatel_header_types::novatel_binary_g3_header': novatel_binary_g3_message
-            _: rec_type_unknown
-  rec_type_unknown:
+            _: record_type_unknown
+  record_type_unknown:
     seq:
       - id: rec_type_unknown_data
         type: u4
@@ -132,6 +132,7 @@ types:
             'novatel_g3_message_types::corrdata': corrdata
             'novatel_g3_message_types::factorydata': factorydata
             'novatel_g3_message_types::measurementdata': measurementdata
+            'novatel_g3_message_types::satpos': satpos
             'novatel_g3_message_types::rawframedata': rawframedata
             'novatel_g3_message_types::timesolution': timesolution
       - id: crc
@@ -197,6 +198,21 @@ types:
         seq:
           - id: measurementdata_observation_stub
             size: 64
+  satpos:
+    seq:
+      - id: satpos_stub
+        size: 12
+      - id: num_of_entries
+        type: u4
+      - id: satpos_data
+        type: satpos_entry
+        repeat: expr
+        repeat-expr: num_of_entries
+    types:
+      satpos_entry:
+        seq:
+          - id: satpos_entry_stub
+            size: 40
   timesolution:
     seq:
       - id: timesolution_stub
@@ -460,6 +476,7 @@ enums:
     4099: corrdata
     4102: factorydata
     4103: measurementdata
+    4106: satpos
     4104: rawframedata
     4107: timesolution
   novatel_legacy_message_types:
