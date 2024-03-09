@@ -6,12 +6,13 @@ meta:
 seq:
   - id: all_novatel_messages
     type: novatel_message
-    #    repeat: eos
-    repeat: expr
-    #    repeat-expr: 100
-    #    repeat-expr: 63
-    #    repeat-expr: 9714
-    repeat-expr: 17000
+    repeat: eos
+#    repeat: expr 
+#    repeat-expr: 100
+#    repeat-expr: 63
+#    repeat-expr: 9714
+#   repeat-expr: 17000
+
 # G3: 0xAACC4756
 # Header Length: 28
 # + 4 + 64*142 + 4
@@ -24,7 +25,7 @@ types:
         type: u4
         enum: novatel_header_types
         doc: Using 4 Bytes
-        eos-error: false
+        #      eos-error: false
         doc-ref: https://novatel.com/support/high-precision-gnss-gps-receivers/specialty-ground-reference-receivers/waas-g-iii-receiver "NovAtel G3"
       - id: novatel_header_type
         type:
@@ -215,9 +216,7 @@ types:
       - id: rawframedata_number_of_bytes
         type: u4
       - id: rawframedata_bytes
-        type: str
         size: rawframedata_number_of_bytes
-        encoding: ASCII
   agcinfo:
     seq:
       - id: num_of_entries
