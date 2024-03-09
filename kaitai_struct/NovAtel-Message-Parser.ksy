@@ -6,10 +6,10 @@ meta:
 seq:
   - id: all_novatel_messages
     type: novatel_message
-    repeat: eos
-#    repeat: expr 
-#    repeat-expr: 100
-#    repeat-expr: 63
+    #    repeat: eos
+    repeat: expr
+    repeat-expr: 100
+    #repeat-expr: 1
 #    repeat-expr: 9714
 #   repeat-expr: 17000
 
@@ -35,8 +35,11 @@ types:
             'novatel_header_types::novatel_ascii_rxcommands': novatel_ascii_rxcommands
             'novatel_header_types::novatel_binary_legacy_header': novatel_binary_legacy_message
             'novatel_header_types::novatel_binary_g3_header': novatel_binary_g3_message
-  #         _: rec_type_unknown
-
+            _: rec_type_unknown
+  rec_type_unknown:
+    seq:
+      - id: rec_type_unknown_data
+        type: u4
   fragmented_udp:
     seq:
       - id: fragmented_udp_data
@@ -212,10 +215,12 @@ types:
   rawframedata:
     seq:
       - id: rawframedata_stub
-        size: 20
+        size: 16
+      - id: rawframedata_bits_in_frame
+        type: u4
       - id: rawframedata_number_of_bytes
         type: u4
-      - id: rawframedata_bytes
+      - id: rawframedata_data
         size: rawframedata_number_of_bytes
   agcinfo:
     seq:
