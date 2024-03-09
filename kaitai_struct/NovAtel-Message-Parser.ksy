@@ -24,6 +24,7 @@ types:
         type: u4
         enum: novatel_header_types
         doc: Using 4 Bytes
+        eos-error: false
         doc-ref: https://novatel.com/support/high-precision-gnss-gps-receivers/specialty-ground-reference-receivers/waas-g-iii-receiver "NovAtel G3"
       - id: novatel_header_type
         type:
