@@ -356,19 +356,13 @@ types:
     seq:
       - id: systemlevels_components_stub
         size: 48
-        
-## NovAtel Message IDs ##
-#    0x0bbb0bbb: bbb_junk
-#    0xaa4412c1: novatel_binary_legacy_header
-#    0xaacc4756: novatel_binary_g3_header
-#    0x21528867: novatel_ascii_rxcommands
 
 enums:
   novatel_header_types:
     0xBB0BBB0B: bbb_junk
     0x1c1244aa: novatel_binary_legacy_header
     0x5647ccaa: novatel_binary_g3_header
-    0x67885221: novatel_ascii_rxcommands
+    0x43585223: novatel_ascii_rxcommands
   
   
   novatel_binary_header_types:
