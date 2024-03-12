@@ -8,8 +8,8 @@ seq:
     type: novatel_message
     #    repeat: eos
     repeat: expr
-    repeat-expr: 13465
-#    repeat-expr: 1
+    #    repeat-expr: 15124
+    repeat-expr: 100
 #    repeat-expr: 9714
 #   repeat-expr: 17000
 
@@ -36,14 +36,17 @@ types:
             'novatel_header_types::novatel_binary_legacy_header': novatel_binary_legacy_message
             'novatel_header_types::novatel_binary_g3_header': novatel_binary_g3_message
             _: record_type_unknown
-  record_type_unknown:
-    seq:
-      - id: rec_type_unknown_data
-        type: u4
+            # Reassembled UDP Packet
   fragmented_udp:
     seq:
       - id: fragmented_udp_data
         type: u4
+        # Catch all for unknonwn message types
+  record_type_unknown:
+    seq:
+      - id: rec_type_unknown_data
+        type: u4
+        # NovAtel ASCII RXCOMMANDS Log
   novatel_ascii_rxcommands:
     seq:
       - id: message_name
@@ -102,47 +105,7 @@ types:
         type: str
         terminator: 0x0a
         encoding: UTF-8
-  novatel_binary_g3_message:
-    seq:
-      - id: message_length
-        type: u2
-      - id: g3_message_id
-        type: u2
-        enum: novatel_g3_message_types
-      - id: log_count
-        type: u4
-      - id: time_status
-        type: u2
-      - id: gps_week
-        type: u2
-      - id: gps_milliseconds
-        type: u4
-      - id: reserved_1
-        size: 4
-      - id: reserved_2
-        size: 2
-      - id: reserved_3
-        size: 2
-      - id: novatel_binary_g3_message_body
-        type:
-          switch-on: g3_message_id
-          cases:
-            'novatel_g3_message_types::agcinfo': agcinfo
-            'novatel_g3_message_types::cardstatus': cardstatus
-            'novatel_g3_message_types::corrdata': corrdata
-            'novatel_g3_message_types::ethstatus': ethstatus
-            'novatel_g3_message_types::factorydata': factorydata
-            'novatel_g3_message_types::measurementdata': measurementdata
-            'novatel_g3_message_types::satpos': satpos
-            'novatel_g3_message_types::rawframedata': rawframedata
-            'novatel_g3_message_types::timesolution': timesolution
-            'novatel_g3_message_types::version': version
-      - id: crc
-        size: 4
-  test:
-    seq:
-      - id: test
-        type: u1
+        # NovAtel Legacy Header
   novatel_binary_legacy_message:
     seq:
       #      - id: third_sync_byte
@@ -176,178 +139,74 @@ types:
         type:
           switch-on: message_id
           cases:
+            'novatel_legacy_message_types::rawephem': rawephem
             'novatel_legacy_message_types::range': range
             'novatel_legacy_message_types::time': time
+            'novatel_legacy_message_types::rawgpsframewp': rawgpsframewp
             'novatel_legacy_message_types::rawwaasframewp': rawwaasframewp
             'novatel_legacy_message_types::agcstats': agcstats
             'novatel_legacy_message_types::allsqmi': allsqmi
             'novatel_legacy_message_types::allsqmq': allsqmq
             'novatel_legacy_message_types::rxsecstatus': rxsecstatus
             'novatel_legacy_message_types::systemlevels': systemlevels
-            #          _: rec_type_unknown
       - id: crc
         size: 4
-  measurementdata:
+        # NovAtel G-III Header
+  novatel_binary_g3_message:
     seq:
-      - id: measurementdata_num_of_observations
+      - id: message_length
+        type: u2
+      - id: g3_message_id
+        type: u2
+        enum: novatel_g3_message_types
+      - id: log_count
         type: u4
-      - id: measurementdata_observations
-        type: measurementdata_observation
-        repeat: expr
-        repeat-expr: measurementdata_num_of_observations
-    types:
-      measurementdata_observation:
-        seq:
-          - id: measurementdata_observation_stub
-            size: 64
-  satpos:
+      - id: time_status
+        type: u2
+      - id: gps_week
+        type: u2
+      - id: gps_milliseconds
+        type: u4
+      - id: reserved_1
+        size: 4
+      - id: reserved_2
+        size: 2
+      - id: reserved_3
+        size: 2
+      - id: novatel_binary_g3_message_body
+        type:
+          switch-on: g3_message_id
+          cases:
+            'novatel_g3_message_types::agcinfo': agcinfo
+            'novatel_g3_message_types::cardstatus': cardstatus
+            'novatel_g3_message_types::corrdata': corrdata
+            'novatel_g3_message_types::ethstatus': ethstatus
+            'novatel_g3_message_types::factorydata': factorydata
+            'novatel_g3_message_types::measurementdata': measurementdata
+            'novatel_g3_message_types::satpos': satpos
+            'novatel_g3_message_types::rawframedata': rawframedata
+            'novatel_g3_message_types::rxcommands': rxcommands
+            'novatel_g3_message_types::timesolution': timesolution
+            'novatel_g3_message_types::version': version
+      - id: crc
+        size: 4
+        # NovAtel Legacy Log Messages
+  rawephem:
     seq:
-      - id: satpos_stub
-        size: 12
-      - id: num_of_entries
+      - id: prn
         type: u4
-      - id: satpos_data
-        type: satpos_entry
-        repeat: expr
-        repeat-expr: num_of_entries
-    types:
-      satpos_entry:
-        seq:
-          - id: satpos_entry_stub
-            size: 40
-  timesolution:
-    seq:
-      - id: timesolution_stub
-        size: 32
-      - id: number_of_channels
+      - id: ref_week
         type: u4
-      - id: channel_data
-        type: channel_info
-        repeat: expr
-        repeat-expr: number_of_channels
-    types:
-      channel_info:
-        seq:
-          - id: channel_info_stub
-            size: 52
-  version:
-    seq:
-      - id: num_of_components
+      - id: ref_secs
         type: u4
-      - id: components
-        type: component
-        repeat: expr
-        repeat-expr: num_of_components
-    types:
-      component:
-        seq:
-          - id: component_stub
-            size: 232
-  rawframedata:
-    seq:
-      - id: rawframedata_stub
-        size: 16
-      - id: rawframedata_bits_in_frame
-        type: u4
-      - id: rawframedata_number_of_bytes
-        type: u4
-      - id: rawframedata_data
-        size: rawframedata_number_of_bytes
-  agcinfo:
-    seq:
-      - id: num_of_entries
-        type: u4
-      - id: agcinfo_data
-        type: agcinfo_measurement
-        repeat: expr
-        repeat-expr: num_of_entries
-    types:
-      agcinfo_measurement:
-        seq:
-          - id: agcinfo_stub
-            size: 88
-  cardstatus:
-    seq:
-      - id: cardstatus_stub
-        size: 16
-      - id: number_of_cards
-        type: u4
-      - id: cardstatus_data
-        type: card_status
-        repeat: expr
-        repeat-expr: number_of_cards
-      - id: number_of_fans
-        type: u4
-      - id: fan_data
-        type: fan_status
-        repeat: expr
-        repeat-expr: number_of_fans
-    types:
-      card_status:
-        seq:
-          - id: card_status_stub
-            size: 60
-      fan_status:
-        seq:
-          - id: fan_speed
-            type: u2
-          - id: fan_failed
-            type: u2
-  corrdata:
-    seq:
-      - id: num_of_entries
-        type: u4
-      - id: correlator_data
-        type: correlator_measurement
-        repeat: expr
-        repeat-expr: num_of_entries
-    types:
-      correlator_measurement:
-        seq:
-          - id: correlator_measurement_stub
-            size: 12
-          - id: number_of_bins
-            type: u4
-          - id: correlation_bins
-            type: correlation_bin
-            repeat: expr
-            repeat-expr: number_of_bins
-      correlation_bin:
-        seq:
-          - id: bin_value_i
-            type: u4
-          - id: bin_value_q
-            type: u4
-  ethstatus:
-    seq:
-      - id: num_of_records
-        type: u4
-      - id: ethstatus_records
-        type: ethstatus_record
-        repeat: expr
-        repeat-expr: num_of_records
-    types:
-      ethstatus_record:
-        seq:
-          - id: ethstatus_record_stub
-            size: 28
-  factorydata:
-    seq:
-      - id: number_of_entries
-        type: u4
-      - id: manufacturer_data
-        type: data_string
-        repeat: expr
-        repeat-expr: number_of_entries
-    types:
-      data_string:
-        seq:
-          - id: manufacturer_data_sting
-            type: str
-            encoding: ASCII
-            size: 512
-  ## range ##
-
+      - id: subframe_1
+        size: 30
+      - id: subframe_2
+        size: 30
+      - id: subframe_3
+        size: 30
+      - id: padding_8_byte_alignment
+        size: 2
   range:
     seq:
       - id: num_of_data_sets
@@ -373,7 +232,16 @@ types:
         type: f8
       - id: reserved
         size: 20
-        ## rawwaasframewp ##
+  rawgpsframewp:
+    seq:
+      - id: channel_number
+        type: u4
+      - id: prn
+        type: u4
+      - id: parity_failuers
+        type: u4
+      - id: raw_subframe_data
+        size: 40
   rawwaasframewp:
     seq:
       - id: channel_number
@@ -489,6 +357,172 @@ types:
     seq:
       - id: systemlevels_components_stub
         size: 48
+        # NovAtel Legacy Log Messages
+  agcinfo:
+    seq:
+      - id: num_of_entries
+        type: u4
+      - id: agcinfo_data
+        type: agcinfo_measurement
+        repeat: expr
+        repeat-expr: num_of_entries
+    types:
+      agcinfo_measurement:
+        seq:
+          - id: agcinfo_stub
+            size: 88
+  cardstatus:
+    seq:
+      - id: cardstatus_stub
+        size: 16
+      - id: number_of_cards
+        type: u4
+      - id: cardstatus_data
+        type: card_status
+        repeat: expr
+        repeat-expr: number_of_cards
+      - id: number_of_fans
+        type: u4
+      - id: fan_data
+        type: fan_status
+        repeat: expr
+        repeat-expr: number_of_fans
+    types:
+      card_status:
+        seq:
+          - id: card_status_stub
+            size: 60
+      fan_status:
+        seq:
+          - id: fan_speed
+            type: u2
+          - id: fan_failed
+            type: u2
+  corrdata:
+    seq:
+      - id: num_of_entries
+        type: u4
+      - id: correlator_data
+        type: correlator_measurement
+        repeat: expr
+        repeat-expr: num_of_entries
+    types:
+      correlator_measurement:
+        seq:
+          - id: correlator_measurement_stub
+            size: 12
+          - id: number_of_bins
+            type: u4
+          - id: correlation_bins
+            type: correlation_bin
+            repeat: expr
+            repeat-expr: number_of_bins
+      correlation_bin:
+        seq:
+          - id: bin_value_i
+            type: u4
+          - id: bin_value_q
+            type: u4
+  ethstatus:
+    seq:
+      - id: num_of_records
+        type: u4
+      - id: ethstatus_records
+        type: ethstatus_record
+        repeat: expr
+        repeat-expr: num_of_records
+    types:
+      ethstatus_record:
+        seq:
+          - id: ethstatus_record_stub
+            size: 28
+  factorydata:
+    seq:
+      - id: number_of_entries
+        type: u4
+      - id: manufacturer_data
+        type: data_string
+        repeat: expr
+        repeat-expr: number_of_entries
+    types:
+      data_string:
+        seq:
+          - id: manufacturer_data_sting
+            type: str
+            encoding: ASCII
+            size: 512
+  measurementdata:
+    seq:
+      - id: measurementdata_num_of_observations
+        type: u4
+      - id: measurementdata_observations
+        type: measurementdata_observation
+        repeat: expr
+        repeat-expr: measurementdata_num_of_observations
+    types:
+      measurementdata_observation:
+        seq:
+          - id: measurementdata_observation_stub
+            size: 64
+  satpos:
+    seq:
+      - id: satpos_stub
+        size: 12
+      - id: num_of_entries
+        type: u4
+      - id: satpos_data
+        type: satpos_entry
+        repeat: expr
+        repeat-expr: num_of_entries
+    types:
+      satpos_entry:
+        seq:
+          - id: satpos_entry_stub
+            size: 40
+  rawframedata:
+    seq:
+      - id: rawframedata_stub
+        size: 16
+      - id: rawframedata_bits_in_frame
+        type: u4
+      - id: rawframedata_number_of_bytes
+        type: u4
+      - id: rawframedata_data
+        size: rawframedata_number_of_bytes
+  rxcommands:
+    seq:
+      - id: number_of_entries
+        type: u4
+      - id: total_length
+        size: _parent.message_length - 32
+  timesolution:
+    seq:
+      - id: timesolution_stub
+        size: 32
+      - id: number_of_channels
+        type: u4
+      - id: channel_data
+        type: channel_info
+        repeat: expr
+        repeat-expr: number_of_channels
+    types:
+      channel_info:
+        seq:
+          - id: channel_info_stub
+            size: 52
+  version:
+    seq:
+      - id: num_of_components
+        type: u4
+      - id: components
+        type: component
+        repeat: expr
+        repeat-expr: num_of_components
+    types:
+      component:
+        seq:
+          - id: component_stub
+            size: 232
 enums:
   novatel_header_types:
     0xBB0BBB0B: fragmented_udp
@@ -498,23 +532,14 @@ enums:
   novatel_binary_header_types:
     0x44: novatel_binary_legacy_header
     0xcc: novatel_binary_g3_header
-  novatel_g3_message_types:
-    4096: agcinfo
-    4098: cardstatus
-    4099: corrdata
-    4101: ethstatus
-    4102: factorydata
-    4103: measurementdata
-    4104: rawframedata
-    4106: satpos
-    4107: timesolution
-    4108: version
   novatel_legacy_message_types:
     # Partial
+    41: rawephem
     43: range
     # Full
     101: time
     # Full
+    570: rawgpsframewp
     571: rawwaasframewp
     # Full
     630: agcstats
@@ -526,3 +551,15 @@ enums:
     638: rxsecstatus
     # Partial
     653: systemlevels
+  novatel_g3_message_types:
+    4096: agcinfo
+    4098: cardstatus
+    4099: corrdata
+    4101: ethstatus
+    4102: factorydata
+    4103: measurementdata
+    4104: rawframedata
+    4105: rxcommands
+    4106: satpos
+    4107: timesolution
+    4108: version
